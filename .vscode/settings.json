@@ -1,0 +1,6 @@
+{
+    "sonarlint.connectedMode.project": {
+        "connectionId": "https-bryan-demo-ngrok-io-",
+        "projectKey": "python-demo"
+    }
+}
