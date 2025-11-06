@@ -1,0 +1,7 @@
+organization=bryan-sopko
+projectKey=bryan-sopko_vulnerable-python-app
+serverUrl=https://sonarqube.us
+serverVersion=8.0.0.76360
+dashboardUrl=https://sonarqube.us/dashboard?id=bryan-sopko_vulnerable-python-app
+ceTaskId=AZpaKLlenL85bWOMjH1S
+ceTaskUrl=https://sonarqube.us/api/ce/task?id=AZpaKLlenL85bWOMjH1S
