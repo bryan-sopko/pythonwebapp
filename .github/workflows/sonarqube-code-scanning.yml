@@ -154,10 +154,19 @@ jobs:
           print(f"✅ Converted {len(sarif['runs'][0]['results'])} issues to SARIF")
           print("\nSARIF preview:")
           print(json.dumps(sarif, indent=2)[:500])
+          
+          # Exit with error if no issues found
+          if len(sarif['runs'][0]['results']) == 0:
+              print("⚠️ WARNING: No issues found in SonarQube!")
+              print("Check if the analysis completed successfully")
           PYTHON_SCRIPT
+          
+          echo "SARIF file contents:"
+          cat sonarqube.sarif
       
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sonarqube.sarif
           category: sonarqube
+        if: always()
