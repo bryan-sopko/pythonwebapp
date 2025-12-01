@@ -5,18 +5,14 @@
         "command": "docker",
         "args": [
           "run",
-          "-i",
           "--rm",
-          "-e",
-          "SONARQUBE_TOKEN",
-          "-e",
-          "SONARQUBE_ORG",
-          "mcp/sonarqube"
-        ],
-        "env": {
-          "SONARQUBE_TOKEN": "squ_664d7ed19cd536093d8c2d7b8f6f7b9b84b1f53e",
-          "SONARQUBE_URL": "https://bryan-demo.ngrok.io"
-        }
+          "-i",
+          "--env", "SONARQUBE_TOKEN=squ_664d7ed19cd536093d8c2d7b8f6f7b9b84b1f53e",
+          "--env", "SONARQUBE_URL=https://bryan-demo.ngrok.io/",
+          "--env", "STORAGE_PATH=/tmp/sonar-mcp-storage",
+          "--volume", "/Users/bsopko/Documents/sonar-mcp-storage:/tmp/sonar-mcp-storage",
+          "mcp/sonarqube:latest"
+        ]
       }
     }
   }

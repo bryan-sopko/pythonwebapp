@@ -1,3 +1,4 @@
+# Core dependencies
 boto3==1.34.148
 botocore==1.34.148
 click==8.2.1
@@ -16,3 +17,56 @@ six==1.16.0
 tzdata==2025.1
 urllib3==2.2.2
 Werkzeug==3.1.3
+
+# INTENTIONALLY VULNERABLE DEPENDENCIES - DO NOT USE IN PRODUCTION
+# These packages have known security vulnerabilities for testing purposes
+
+# XML processing with XXE vulnerabilities
+lxml==4.6.2  # CVE-2021-28957 - XXE injection vulnerability
+
+# Pickle deserialization vulnerabilities
+pickle5==0.0.11  # Unsafe deserialization
+
+# Cryptography with known weaknesses  
+cryptography==3.2.1  # CVE-2020-36242 - ECDSA timing attack
+
+# HTTP library with SSL verification issues
+requests==2.25.0  # CVE-2021-33503 - SSL certificate verification bypass
+
+# YAML parsing with code execution
+PyYAML==5.3.1  # CVE-2020-14343 - Arbitrary code execution via yaml.load()
+
+# Django with multiple security issues (if using Django components)
+Django==3.1.6  # CVE-2021-23336, CVE-2021-3281 - Multiple vulnerabilities
+
+# Pillow with image processing vulnerabilities
+Pillow==8.1.0  # CVE-2021-25289, CVE-2021-25290 - Buffer overflow
+
+# Urllib3 with CRLF injection (using vulnerable version)
+# urllib3==1.26.3  # CVE-2021-33503 - CRLF injection (commented to avoid conflict)
+
+# SQLAlchemy with SQL injection risks
+SQLAlchemy==1.3.22  # CVE-2019-7164 - SQL injection in order_by clause
+
+# Paramiko with authentication bypass
+paramiko==2.7.1  # CVE-2022-24302 - Authentication bypass
+
+# Tornado with path traversal
+tornado==6.0.3  # CVE-2021-40797 - Path traversal vulnerability
+
+# Httplib2 with TLS certificate validation issues
+httplib2==0.18.1  # CVE-2021-21240 - TLS certificate validation bypass
+
+# Bleach with XSS bypass
+bleach==3.2.1  # CVE-2021-23980 - XSS bypass via mutation
+
+# Notebook with XSS vulnerabilities (if using Jupyter)
+notebook==6.2.0  # CVE-2021-32798 - XSS vulnerability
+
+# Tensorflow with multiple security issues (if doing ML)
+tensorflow==2.4.0  # CVE-2021-29512, CVE-2021-29513 - Multiple vulnerabilities
+
+# COPYLEFT LICENSING ISSUE - GPL/LGPL packages that may cause compliance problems
+pyzmq==22.0.3  # LGPL-3.0 license - requires source disclosure for modifications
+matplotlib==3.3.4  # Mixed licensing with GPL components - copyleft compliance required
+GPy==1.9.9  # GPL-2.0 license - strong copyleft requiring full source disclosure
