@@ -15,7 +15,6 @@ jobs:
   sonarqube-analysis:
     name: SonarQube Analysis
     runs-on: ubuntu-latest
-    environment: Sonar_Python
     permissions:
       security-events: write
       actions: read
@@ -36,6 +35,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt || true
+      
+      - name: Debug - Check secrets
+        run: |
+          echo "SONAR_HOST_URL is set: ${{ secrets.SONAR_HOST_URL != '' }}"
+          echo "SONAR_TOKEN is set: ${{ secrets.SONAR_TOKEN != '' }}"
       
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
