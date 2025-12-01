@@ -43,12 +43,20 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
       
+      - name: Wait for analysis to complete
+        run: sleep 30
+      
       - name: Download and Convert to SARIF
         run: |
+          echo "Downloading issues from SonarQube..."
+          
           # Download issues from SonarQube
           curl -u "${{ secrets.SONAR_TOKEN }}:" \
             "${{ secrets.SONAR_HOST_URL }}/api/issues/search?componentKeys=python-demo&types=VULNERABILITY,BUG,SECURITY_HOTSPOT&ps=500" \
             -o sonarqube-issues.json
+          
+          echo "SonarQube response:"
+          cat sonarqube-issues.json | python3 -m json.tool | head -30
           
           # Create SARIF with actual issues
           python3 << 'PYTHON_SCRIPT'
@@ -59,6 +67,8 @@ jobs:
           with open('sonarqube-issues.json', 'r') as f:
               data = json.load(f)
           
+          print(f"Found {len(data.get('issues', []))} issues from SonarQube")
+          
           # Convert to SARIF
           sarif = {
               "version": "2.1.0",
@@ -68,7 +78,8 @@ jobs:
                       "driver": {
                           "name": "SonarQube",
                           "informationUri": "https://www.sonarqube.org/",
-                          "version": "1.0"
+                          "version": "1.0",
+                          "rules": []
                       }
                   },
                   "results": []
@@ -83,6 +94,8 @@ jobs:
               severity = issue.get('severity', 'MAJOR')
               line = issue.get('line', 1)
               issue_type = issue.get('type', 'BUG')
+              
+              print(f"Processing issue: {rule} in {component}:{line}")
               
               # Map SonarQube severity to SARIF level
               level_map = {
@@ -117,7 +130,9 @@ jobs:
           with open('sonarqube.sarif', 'w') as f:
               json.dump(sarif, f, indent=2)
           
-          print(f"Converted {len(sarif['runs'][0]['results'])} issues to SARIF")
+          print(f"✅ Converted {len(sarif['runs'][0]['results'])} issues to SARIF")
+          print("\nSARIF preview:")
+          print(json.dumps(sarif, indent=2)[:500])
           PYTHON_SCRIPT
       
       - name: Upload SARIF to GitHub Code Scanning
