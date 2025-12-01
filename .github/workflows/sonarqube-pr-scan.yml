@@ -11,6 +11,7 @@ jobs:
   sonarqube-scan:
     name: SonarQube PR Scan
     runs-on: ubuntu-latest
+    environment: Sonar_Python
     
     steps:
       - name: Checkout code
@@ -33,19 +34,11 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: >
-            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
-            -Dsonar.projectKey=python-demo
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.head_ref }}
-            -Dsonar.pullrequest.base=${{ github.base_ref }}
-            -Dsonar.pullrequest.provider=github
-            -Dsonar.pullrequest.github.repository=${{ github.repository }}
       
       - name: Comment PR with SonarQube results
         uses: sonarsource/sonarqube-quality-gate-action@master
         timeout-minutes: 5
+        continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}

@@ -39,19 +39,11 @@ DB_USER = "admin"
 DB_PASS = "password"
 DB_NAME = "insecure.db"
 
-# Hardcoded AWS credentials (CRITICAL security issue)
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET_ACCESS_KEY = "kHeUAwnSUizTWpSbyGAz4f+As5LshPIjvtpswqGb"
-AWS_REGION = "us-east-1"
-S3_BUCKET_NAME = "my-app-uploads"
-router = APIRouter()
-
-@router.get('/example')
-async def  get_users(user: str):
-    await database.fetch_all("SELECT user FROM users WHERE user = '" + user + "'")
-def load_config(raw: str) -> dict:
-    # Unsafe: can construct arbitrary Python objects
-    return yaml.load(raw)
+# NEW: Additional hardcoded credentials
+API_KEY = "sk-1234567890abcdef1234567890abcdef"
+JWT_SECRET = "my-super-secret-jwt-key-do-not-share"
+PAYMENT_KEY = "pk_test_1234567890secretkeydemo"
+AUTH_TOKEN = "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
 def get_db():
     # Insecure, no password protection on SQLite
     return sqlite3.connect(DB_NAME)
@@ -163,94 +155,34 @@ def xss():
     html = f"<h2>Your search: {user_input}</h2>"
     return render_template_string(html)
 
-@app.route('/search-users')
-def search_users():
-    """Search users endpoint with SQL injection vulnerability"""
-    search_query = request.args.get('q', '')
-    if not search_query:
-        return 'Please provide a search query using ?q=searchterm'
-    
-    conn = get_db()
-    cursor = conn.cursor()
-    # Another SQL injection vulnerability - using LIKE with direct string interpolation
-    query = f"SELECT id, username, email FROM users WHERE username LIKE '%{search_query}%' OR email LIKE '%{search_query}%'"
-    cursor.execute(query)
-    results = cursor.fetchall()
-    conn.close()
-    
-    if results:
-        user_list = ""
-        for user in results:
-            user_list += f"<li>ID: {user[0]}, Username: {user[1]}, Email: {user[2]}</li>"
-        return f"<h2>Search Results:</h2><ul>{user_list}</ul>"
-    else:
-        return f"<h2>No users found for: {search_query}</h2>"
+@app.route('/execute')
+def execute_command():
+    """NEW: Command injection vulnerability"""
+    import os
+    cmd = request.args.get('cmd', 'ls')
+    # Command injection - directly executing user input
+    result = os.system(cmd)
+    return f"<h2>Command executed with result: {result}</h2>"
 
-@app.route('/delete-user', methods=['POST'])
-def delete_user():
-    """NEW VULNERABLE ENDPOINT - SQL injection in DELETE statement"""
-    user_id = request.form.get('user_id', '')
-    reason = request.form.get('reason', 'No reason provided')
-    
-    if not user_id:
-        return 'Missing user_id parameter'
-    
-    conn = get_db()
-    cursor = conn.cursor()
-    # VULNERABLE: Direct string concatenation in DELETE query
-    query = f"DELETE FROM users WHERE id = {user_id} AND status = 'active'"
-    cursor.execute(query)
-    
-    # Also vulnerable: Log the deletion with string interpolation
-    log_query = f"INSERT INTO audit_log (action, details) VALUES ('DELETE', 'User {user_id} deleted: {reason}')"
-    cursor.execute(log_query)
-    
-    conn.commit()
-    conn.close()
-    
-    return f'User {user_id} has been deleted. Reason: {reason}'
+@app.route('/eval')
+def eval_code():
+    """NEW: Code injection vulnerability"""
+    code = request.args.get('code', '1+1')
+    # Code injection - using eval with user input
+    try:
+        result = eval(code)
+        return f"<h2>Result: {result}</h2>"
+    except Exception as e:
+        return f"<h2>Error: {e}</h2>"
 
-@app.route('/upload-avatar', methods=['POST'])
-def upload_avatar():
-    """Upload user avatar - exposes AWS credentials vulnerability"""
-    user_id = request.form.get('user_id', '')
-    avatar_data = request.form.get('avatar_data', 'default_avatar_content')
-    
-    if not user_id:
-        return 'Missing user_id parameter'
-    
-    # VULNERABLE: Function uses hardcoded AWS credentials
-    filename = f"avatars/user_{user_id}_avatar.jpg"
-    result = upload_to_s3(avatar_data.encode(), filename)
-    
-    return f'Avatar upload result: {result}'
-
-@app.route('/get-user-orders', methods=['GET'])
-def get_user_orders():
-    """Get user orders - VULNERABLE to SQL injection via direct concatenation"""
-    user_id = request.args.get('user_id', '')
-    status_filter = request.args.get('status', 'active')
-    
-    if not user_id:
-        return 'Missing user_id parameter'
-    
-    conn = get_db()
-    cursor = conn.cursor()
-    
-    # VULNERABLE: Direct string concatenation allows SQL injection
-    query = "SELECT * FROM orders WHERE user_id = " + user_id + " AND status = '" + status_filter + "'"
-    cursor.execute(query)
-    results = cursor.fetchall()
-    conn.close()
-    
-    if results:
-        order_list = "<h2>Orders:</h2><ul>"
-        for order in results:
-            order_list += f"<li>Order ID: {order[0]}, Amount: ${order[1]}, Status: {order[2]}</li>"
-        order_list += "</ul>"
-        return order_list
-    else:
-        return f"<h2>No orders found for user {user_id} with status '{status_filter}'</h2>"
+@app.route('/pickle_load', methods=['POST'])
+def unsafe_pickle():
+    """NEW: Unsafe deserialization with pickle"""
+    import pickle
+    data = request.data
+    # Unsafe deserialization - can execute arbitrary code
+    obj = pickle.loads(data)
+    return f"<h2>Loaded: {str(obj)}</h2>"
 
 @app.route("/")
 def home():
@@ -259,8 +191,8 @@ def home():
     <ul>
         <li><a href='/login'>Login (SQL Injection)</a></li>
         <li><a href='/xss?q=test'>XSS Demo</a></li>
-        <li><a href='/search-users?q=admin'>Search Users (SQL Injection #2)</a></li>
-        <li><a href='/get-user-orders?user_id=1&status=active'>Get Orders (SQL Injection #5)</a></li>
+        <li><a href='/execute?cmd=ls'>Command Injection</a></li>
+        <li><a href='/eval?code=1+1'>Code Injection</a></li>
     </ul>
     <h3>Forms for Testing:</h3>
     <form method="post" action="/update-profile">
@@ -279,6 +211,28 @@ def home():
         <input type="submit" value="Upload Avatar (AWS Credentials Exposure)">
     </form>
     """
+
+@app.route('/path_traversal')
+def path_traversal():
+    """NEW: Path traversal vulnerability"""
+    import os
+    filename = request.args.get('file', 'test.txt')
+    # Path traversal - no validation on file path
+    try:
+        with open(f"/var/www/files/{filename}", 'r') as f:
+            content = f.read()
+        return f"<pre>{content}</pre>"
+    except Exception as e:
+        return f"Error: {e}"
+
+@app.route('/ssrf')
+def ssrf():
+    """NEW: Server-Side Request Forgery"""
+    import requests
+    url = request.args.get('url', 'http://example.com')
+    # SSRF - fetching arbitrary URLs
+    response = requests.get(url)
+    return f"<h2>Response:</h2><pre>{response.text[:1000]}</pre>"
 
 if __name__ == '__main__':
     app.run(debug=False)
