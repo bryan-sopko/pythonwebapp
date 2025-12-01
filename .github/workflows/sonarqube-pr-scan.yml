@@ -11,6 +11,7 @@ jobs:
   sonarqube-scan:
     name: SonarQube PR Scan
     runs-on: ubuntu-latest
+    environment: Sonar_Python
     
     steps:
       - name: Checkout code
