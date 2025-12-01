@@ -6,15 +6,28 @@ import yaml
 # Before
 import os
 import sys
+import subprocess
 
 def foo():
     return 42
+
+# NEW: Weak cryptographic function
+def weak_hash_password(password):
+    import hashlib
+    # Using MD5 for password hashing - INSECURE!
+    return hashlib.md5(password.encode()).hexdigest()
+
 router = APIRouter()
 
 app = Flask(__name__)
 
 # Hardcoded secret key (bad practice)
 SECRET_KEY = "super_secret_key_12345"
+
+# NEW: Another hardcoded secret
+DATABASE_PASSWORD = "admin123!@#"
+AWS_SECRET = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
 @router.get('/example')
 async def  get_users(user: str):
     await database.fetch_all("SELECT user FROM users WHERE user = '" + user + "'") # Noncompliant
@@ -155,6 +168,21 @@ def update_profile():
     conn.close()
     
     return f'Profile updated for user ID {user_id} with email: {new_email}'
+
+@app.route('/run-command', methods=['POST'])
+def run_command():
+    """NEW: Direct command execution - OS command injection"""
+    cmd = request.form.get('command', '')
+    # CRITICAL: Direct execution of user input
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    return f"<pre>Output:\n{result.stdout}\nErrors:\n{result.stderr}</pre>"
+
+@app.route('/weak-crypto', methods=['POST'])
+def weak_crypto():
+    """NEW: Using weak cryptography for passwords"""
+    password = request.form.get('password', '')
+    hashed = weak_hash_password(password)
+    return f"Your 'secure' hash: {hashed}"
 
 @app.route('/xss')
 def xss():
