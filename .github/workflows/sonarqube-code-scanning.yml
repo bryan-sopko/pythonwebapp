@@ -47,11 +47,22 @@ jobs:
           echo "SONAR_HOST_URL is set: ${{ secrets.SONAR_HOST_URL != '' }}"
           echo "SONAR_TOKEN is set: ${{ secrets.SONAR_TOKEN != '' }}"
       
-      - name: SonarQube Scan
-        uses: sonarsource/sonarqube-scan-action@master
+      - name: Download and setup SonarScanner
+        run: |
+          wget -q https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-7.3.0.5189-linux-x64.zip
+          unzip -q sonar-scanner-cli-7.3.0.5189-linux-x64.zip
+          echo "$GITHUB_WORKSPACE/sonar-scanner-7.3.0.5189-linux-x64/bin" >> $GITHUB_PATH
+      
+      - name: Run SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          sonar-scanner \
+            -Dsonar.projectKey=python-demo \
+            -Dsonar.sources=app \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
       
       - name: Wait for analysis to complete
         run: sleep 30
