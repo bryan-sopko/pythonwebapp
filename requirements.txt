@@ -65,3 +65,8 @@ notebook==6.2.0  # CVE-2021-32798 - XSS vulnerability
 
 # Tensorflow with multiple security issues (if doing ML)
 tensorflow==2.4.0  # CVE-2021-29512, CVE-2021-29513 - Multiple vulnerabilities
+
+# COPYLEFT LICENSING ISSUE - GPL/LGPL packages that may cause compliance problems
+pyzmq==22.0.3  # LGPL-3.0 license - requires source disclosure for modifications
+matplotlib==3.3.4  # Mixed licensing with GPL components - copyleft compliance required
+GPy==1.9.9  # GPL-2.0 license - strong copyleft requiring full source disclosure

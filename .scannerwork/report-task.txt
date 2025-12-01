@@ -1,7 +1,6 @@
-organization=bryan-sopko
-projectKey=bryan-sopko_vulnerable-python-app
-serverUrl=https://sonarqube.us
-serverVersion=8.0.0.76360
-dashboardUrl=https://sonarqube.us/dashboard?id=bryan-sopko_vulnerable-python-app
-ceTaskId=AZpaKLlenL85bWOMjH1S
-ceTaskUrl=https://sonarqube.us/api/ce/task?id=AZpaKLlenL85bWOMjH1S
+projectKey=python-demo
+serverUrl=https://bryan-demo.ngrok.io
+serverVersion=2025.5.0.113872
+dashboardUrl=https://bryan-demo.ngrok.io/dashboard?id=python-demo
+ceTaskId=99614d71-c4c3-43e5-861b-b7cdf7b399e6
+ceTaskUrl=https://bryan-demo.ngrok.io/api/ce/task?id=99614d71-c4c3-43e5-861b-b7cdf7b399e6
