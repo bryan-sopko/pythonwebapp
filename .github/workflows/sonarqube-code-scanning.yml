@@ -71,9 +71,9 @@ jobs:
         run: |
           echo "Downloading issues from SonarQube..."
           
-          # Download issues from SonarQube
+          # Download ALL issues from SonarQube (not filtering by type since CODE_SMELL is important too)
           curl -u "${{ secrets.SONAR_TOKEN }}:" \
-            "${{ secrets.SONAR_HOST_URL }}/api/issues/search?componentKeys=python-demo&types=VULNERABILITY,BUG,SECURITY_HOTSPOT&ps=500" \
+            "${{ secrets.SONAR_HOST_URL }}/api/issues/search?componentKeys=python-demo&ps=500" \
             -o sonarqube-issues.json
           
           echo "SonarQube response:"
