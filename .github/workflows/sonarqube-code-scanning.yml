@@ -43,31 +43,85 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
       
-      - name: Download SARIF report
+      - name: Download and Convert to SARIF
         run: |
+          # Download issues from SonarQube
           curl -u "${{ secrets.SONAR_TOKEN }}:" \
-            "${{ secrets.SONAR_HOST_URL }}/api/issues/search?componentKeys=python-demo&types=VULNERABILITY,BUG,CODE_SMELL,SECURITY_HOTSPOT&ps=500&facets=severities,types" \
-            -o sonarqube-results.json || true
-      
-      - name: Convert to SARIF (simplified)
-        run: |
-          echo '{
-            "version": "2.1.0",
-            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
-            "runs": [{
-              "tool": {
-                "driver": {
-                  "name": "SonarQube",
-                  "informationUri": "https://www.sonarqube.org/"
-                }
-              },
-              "results": []
-            }]
-          }' > sonarqube.sarif
+            "${{ secrets.SONAR_HOST_URL }}/api/issues/search?componentKeys=python-demo&types=VULNERABILITY,BUG,SECURITY_HOTSPOT&ps=500" \
+            -o sonarqube-issues.json
+          
+          # Create SARIF with actual issues
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          
+          # Load SonarQube issues
+          with open('sonarqube-issues.json', 'r') as f:
+              data = json.load(f)
+          
+          # Convert to SARIF
+          sarif = {
+              "version": "2.1.0",
+              "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+              "runs": [{
+                  "tool": {
+                      "driver": {
+                          "name": "SonarQube",
+                          "informationUri": "https://www.sonarqube.org/",
+                          "version": "1.0"
+                      }
+                  },
+                  "results": []
+              }]
+          }
+          
+          # Convert each issue
+          for issue in data.get('issues', []):
+              component = issue.get('component', '').replace('python-demo:', '')
+              message = issue.get('message', 'No description')
+              rule = issue.get('rule', 'unknown')
+              severity = issue.get('severity', 'MAJOR')
+              line = issue.get('line', 1)
+              issue_type = issue.get('type', 'BUG')
+              
+              # Map SonarQube severity to SARIF level
+              level_map = {
+                  'BLOCKER': 'error',
+                  'CRITICAL': 'error',
+                  'MAJOR': 'warning',
+                  'MINOR': 'note',
+                  'INFO': 'note'
+              }
+              
+              result = {
+                  "ruleId": rule,
+                  "level": level_map.get(severity, 'warning'),
+                  "message": {
+                      "text": f"[{issue_type}] {message}"
+                  },
+                  "locations": [{
+                      "physicalLocation": {
+                          "artifactLocation": {
+                              "uri": component
+                          },
+                          "region": {
+                              "startLine": line
+                          }
+                      }
+                  }]
+              }
+              
+              sarif['runs'][0]['results'].append(result)
+          
+          # Write SARIF file
+          with open('sonarqube.sarif', 'w') as f:
+              json.dump(sarif, f, indent=2)
+          
+          print(f"Converted {len(sarif['runs'][0]['results'])} issues to SARIF")
+          PYTHON_SCRIPT
       
       - name: Upload SARIF to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sonarqube.sarif
           category: sonarqube
-        continue-on-error: true
